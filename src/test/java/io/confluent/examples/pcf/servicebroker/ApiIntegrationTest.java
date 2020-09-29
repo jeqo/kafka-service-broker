@@ -1,7 +1,6 @@
 package io.confluent.examples.pcf.servicebroker;
 
 import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -37,7 +36,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -94,12 +92,11 @@ public class ApiIntegrationTest {
         Thread.sleep(5000);
         String bindingId = UUID.randomUUID().toString();
         BindingCredentials bindingCredentials = createBinding(serviceInstanceId, bindingId);
-        String user = bindingCredentials.credentials.get("user");
+        String user = bindingCredentials.credentials.get("username");
         String password = bindingCredentials.credentials.get("password");
         String topic = bindingCredentials.credentials.get("topic");
-        String consumerGroup = bindingCredentials.credentials.get("consumer_group");
-        // TODO: better use bootstrap_server instead of url
-        String bootstrapServers = bindingCredentials.credentials.get("url");
+        String consumerGroup = bindingCredentials.credentials.get("consumerGroup");
+        String bootstrapServers = bindingCredentials.credentials.get("bootstrapServers");
         testProducing(bootstrapServers, user, password, topic);
         testConsuming(bootstrapServers, user, password, consumerGroup, topic);
         removeBinding(serviceInstanceId, bindingId);
@@ -141,7 +138,7 @@ public class ApiIntegrationTest {
         // NOTE: when running locally, such as in this integration test, serviceAccount and apiKey must be the same.
         // in Confluent Cloud they are different things.
         StringEntity params = new StringEntity(
-                "[{\"apiKey\":\"client\", \"apiSecret\":\"client-secret\", \"serviceAccount\":\"client\"}]");
+            "{\"User:client\":{\"apiKey\":\"client\", \"apiSecret\":\"client-secret\"}}");
         request.addHeader("content-type", "application/json");
         request.setEntity(params);
         // Note: the result is not logged if this call fails. Should be improved.
@@ -164,7 +161,7 @@ public class ApiIntegrationTest {
 
     private void createInstance(String serviceInstanceId) {
         Map<String, Object> params = new HashMap<>();
-        params.put("topic_name", topicName);
+        params.put("topicName", topicName);
         ResponseEntity<String> createResult = restTemplate.exchange(
                 url() + serviceInstanceId,
                 HttpMethod.PUT,
@@ -183,7 +180,8 @@ public class ApiIntegrationTest {
 
     private BindingCredentials createBinding(String serviceInstanceId, String bindingId) {
         Map<String, Object> params = new HashMap<>();
-        params.put("consumer_group", "sampleConsumerGroup");
+        params.put("consumerGroup", "sampleConsumerGroup");
+        params.put("serviceAccount", "User:client");
         CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest =
                 CreateServiceInstanceBindingRequest.builder()
                         .serviceInstanceId(serviceInstanceId)
@@ -192,8 +190,7 @@ public class ApiIntegrationTest {
                         .bindResource(
                                 BindResource.builder()
                                         .appGuid(UUID.randomUUID().toString())
-                                        .build()
-                        )
+                                        .build())
                         .parameters(params)
                         .build();
         ResponseEntity<BindingCredentials> bindResult = restTemplate.exchange(

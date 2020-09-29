@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceAccountAndApiKey {
+public class ApiKeyAndSecret {
 
     private String apiKey;
     private String apiSecret;
-    private String serviceAccount;
-
 }

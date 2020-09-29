@@ -1,11 +1,11 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  name: topic-kubernetes2
-  namespace: catalog
+  name: system1-entity2
+  namespace: system1
 spec:
   # References one of the previously returned services
   clusterServiceClassExternalName: confluent-kafka
   clusterServicePlanExternalName: gold
   parameters:
-    topic_name: topic-kubernetes2
+    topicName: system1-entity2

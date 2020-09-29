@@ -1,10 +1,9 @@
 package io.confluent.examples.pcf.servicebroker.accounts;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class maintains a list of service accounts with associated Api Keys.
@@ -17,20 +16,20 @@ import java.util.List;
 @Slf4j
 public class ServiceAccountAndApiKeyService {
 
-    List<ServiceAccountAndApiKey> store = new ArrayList<>();
+    Map<String, ApiKeyAndSecret> store = new HashMap<>();
 
-    public ServiceAccountAndApiKey get() {
+    public ApiKeyAndSecret get(String serviceAccountId) {
         if (store.isEmpty()) throw new RuntimeException("No api keys configured");
-        ServiceAccountAndApiKey first = store.remove(0);
-        log.info("Retrieving ServiceAccount with Key {} and account number {}", first.getApiKey(), first.getServiceAccount());
+        ApiKeyAndSecret first = store.get(serviceAccountId);
+        log.info("Retrieving ServiceAccount with Key {} and account number {}", first.getApiKey(), serviceAccountId);
         return first;
     }
 
-    public void addAll(List<ServiceAccountAndApiKey> serviceAccountAndApiKey) {
-        store.addAll(serviceAccountAndApiKey);
+    public void addAll(Map<String, ApiKeyAndSecret> entries) {
+        store.putAll(entries);
     }
 
-    public List<ServiceAccountAndApiKey> getAll() {
+    public Map<String, ApiKeyAndSecret> getAll() {
         return store;
     }
 }

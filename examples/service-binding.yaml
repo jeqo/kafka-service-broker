@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceBinding
+metadata:
+  name: topic-binding-system1-entity2
+  namespace: system1
+spec:
+  instanceRef:
+    name: system1-entity2
+  parameters:
+    consumerGroup: system1
+    serviceAccount: User:115996

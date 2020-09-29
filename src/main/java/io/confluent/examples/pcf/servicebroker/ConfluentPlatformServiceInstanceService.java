@@ -85,7 +85,7 @@ public class ConfluentPlatformServiceInstanceService implements ServiceInstanceS
     @Override
     public Mono<CreateServiceInstanceResponse> createServiceInstance(CreateServiceInstanceRequest createServiceInstanceRequest) {
         log.info("Creating service instance.");
-        String topic = (String) createServiceInstanceRequest.getParameters().get("topic_name");
+        String topic = (String) createServiceInstanceRequest.getParameters().get("topicName");
         if (topic == null || topic.isEmpty()) {
             throw new RuntimeException("topic name is missing.");
         }

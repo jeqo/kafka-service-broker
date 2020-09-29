@@ -1,11 +1,10 @@
 package io.confluent.examples.pcf.servicebroker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.confluent.examples.pcf.servicebroker.accounts.ServiceAccountAndApiKey;
+import io.confluent.examples.pcf.servicebroker.accounts.ApiKeyAndSecret;
 import io.confluent.examples.pcf.servicebroker.accounts.ServiceAccountAndApiKeyService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.common.acl.*;
 import org.apache.kafka.common.resource.PatternType;
 import org.apache.kafka.common.resource.ResourcePattern;
@@ -39,50 +38,59 @@ public class ConfluentPlatformServiceInstanceBindingService implements ServiceIn
     private ServiceAccountAndApiKeyService serviceAccountAndApiKeyService;
 
     public Mono<CreateServiceInstanceBindingResponse> createServiceInstanceBinding(CreateServiceInstanceBindingRequest request) {
-        String consumerGroup = (String) request.getParameters().get("consumer_group");
-        if (consumerGroup == null || consumerGroup.equals("")) throw new RuntimeException("Consumer group must be specified in binding request. ");
+        String serviceAccount = (String) request.getParameters().get("serviceAccount");
+        String consumerGroup = (String) request.getParameters().get("consumerGroup");
+        if (serviceAccount == null || serviceAccount.isBlank()) {
+            throw new RuntimeException("Service account id must be specified in binding request.");
+        }
         UUID serviceInstanceId = UUID.fromString(request.getServiceInstanceId());
-        TopicServiceInstance topicServiceInstance = serviceInstanceRepository.get(serviceInstanceId);
-        ServiceAccountAndApiKey serviceAccountAndApiKey = serviceAccountAndApiKeyService.get();
+        TopicServiceInstance topicServiceInstance = serviceInstanceRepository
+            .get(serviceInstanceId);
+        ApiKeyAndSecret apiKeyAndSecret = serviceAccountAndApiKeyService.get(serviceAccount);
         createAcls(
-                topicServiceInstance.topicName,
-                "User:" + serviceAccountAndApiKey.getServiceAccount(),
-                consumerGroup
+            topicServiceInstance.topicName,
+            serviceAccount,
+            consumerGroup
         );
-        addBinding(topicServiceInstance, request.getBindResource().getAppGuid(), request.getBindingId(), serviceAccountAndApiKey.getApiKey());
+        addBinding(
+            topicServiceInstance,
+            request.getBindResource().getAppGuid(),
+            request.getBindingId(),
+            apiKeyAndSecret.getApiKey());
         // TODO: check if binding existed.
         Map<String, Object> credentials = new HashMap<>();
-        credentials.put("url", kafkaBootstrapServers);
-        credentials.put("user", serviceAccountAndApiKey.getApiKey());
-        credentials.put("password", serviceAccountAndApiKey.getApiSecret());
-        credentials.put("serviceAccount", serviceAccountAndApiKey.getServiceAccount());
+        credentials.put("bootstrapServers", kafkaBootstrapServers);
+        credentials.put("username", apiKeyAndSecret.getApiKey());
+        credentials.put("password", apiKeyAndSecret.getApiSecret());
+        credentials.put("serviceAccount", serviceAccount);
         credentials.put("topic", topicServiceInstance.topicName);
-        credentials.put("consumer_group", consumerGroup);
+        if (consumerGroup != null) {
+            credentials.put("consumerGroup", consumerGroup);
+        }
         return Mono.just(
-                CreateServiceInstanceAppBindingResponse.builder()
-                        .credentials(credentials)
-                        .async(false)
-                        .bindingExisted(false)
-                        .build()
+            CreateServiceInstanceAppBindingResponse.builder()
+                .credentials(credentials)
+                .async(false)
+                .bindingExisted(false)
+                .build()
         );
     }
 
     private void createAcls(String topicName, String serviceAccount, String consumerGroup) {
-        CreateAclsResult createAclsResult = adminClient.createAcls(
-                Arrays.asList(
-                        // TODO: AclOperation.ALL is probably too much.
-                        new AclBinding(
-                                new ResourcePattern(ResourceType.TOPIC, topicName, PatternType.LITERAL),
-                                new AccessControlEntry(serviceAccount, "*", AclOperation.ALL, AclPermissionType.ALLOW)
-                        ),
-                        new AclBinding(
-                                new ResourcePattern(ResourceType.GROUP, consumerGroup, PatternType.LITERAL),
-                                new AccessControlEntry(serviceAccount, "*", AclOperation.ALL, AclPermissionType.ALLOW)
-                        )
-                )
-        );
+        var acls = new ArrayList<AclBinding>();
+        acls.add(new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, topicName, PatternType.LITERAL),
+            new AccessControlEntry(serviceAccount, "*", AclOperation.ALL, AclPermissionType.ALLOW)
+        ));
+        if (consumerGroup != null) {
+            acls.add(new AclBinding(
+                new ResourcePattern(ResourceType.GROUP, consumerGroup, PatternType.LITERAL),
+                new AccessControlEntry(serviceAccount, "*", AclOperation.ALL,
+                    AclPermissionType.ALLOW)
+            ));
+        }
         try {
-            createAclsResult.all().get();
+            adminClient.createAcls(acls).all().get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
@@ -155,5 +163,4 @@ public class ConfluentPlatformServiceInstanceBindingService implements ServiceIn
         topicServiceInstance.setBindings(remainingBindings);
         serviceInstanceRepository.save(topicServiceInstance);
     }
-
 }
