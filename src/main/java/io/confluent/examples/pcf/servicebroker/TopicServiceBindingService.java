@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class ConfluentPlatformServiceInstanceBindingService implements ServiceInstanceBindingService {
+public class TopicServiceBindingService implements ServiceInstanceBindingService {
 
     @Autowired
     private ServiceInstanceRepository serviceInstanceRepository;

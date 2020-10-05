@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-producer
+  namespace: default
+spec:
+  containers:
+    - name: producer
+      image: jeqo/cse-demo-producer
+      env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            secretKeyRef:
+              name:  producer-topic1-binding
+              key: bootstrapServers
+        - name: KAFKA_TOPIC
+          valueFrom:
+            secretKeyRef:
+              name:  producer-topic1-binding
+              key: topic
+        - name: KAFKA_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name:  producer-topic1-binding
+              key: username
+        - name: KAFKA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name:  producer-topic1-binding
+              key: password

@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
-public class ConfluentPlatformServiceInstanceService implements ServiceInstanceService {
+public class TopicServiceInstanceService implements ServiceInstanceService {
 
     private final AdminClient adminClient;
     // TODO: we should differentiate between the replication factor of the topics that we create, and the one of the storage topic.
@@ -31,12 +31,12 @@ public class ConfluentPlatformServiceInstanceService implements ServiceInstanceS
     private final ServiceInstanceRepository serviceInstanceRepository;
     private final Map<String, Integer> planToPartitionsMapping;
 
-    public ConfluentPlatformServiceInstanceService(
-            @Autowired AdminClient adminClient,
-            @Value( "${broker.store.topic.replication}" ) short replicationFactor,
-            @Autowired ServiceInstanceRepository serviceInstanceRepository,
-            @Autowired Catalog catalog
-            ) {
+    public TopicServiceInstanceService(
+        @Autowired AdminClient adminClient,
+        @Value("${broker.store.topic.replication}") short replicationFactor,
+        @Autowired ServiceInstanceRepository serviceInstanceRepository,
+        @Autowired Catalog catalog
+    ) {
         this.adminClient = adminClient;
         this.replicationFactor = replicationFactor;
         this.serviceInstanceRepository = serviceInstanceRepository;
@@ -90,6 +90,14 @@ public class ConfluentPlatformServiceInstanceService implements ServiceInstanceS
             throw new RuntimeException("topic name is missing.");
         }
         try {
+            if (adminClient.listTopics().names().get().contains(topic)) {
+                return Mono.just(
+                    CreateServiceInstanceResponse.builder()
+                        .async(false)
+                        .instanceExisted(true)
+                        .build()
+                );
+            }
             createTopicAndStoreServiceInstance(createServiceInstanceRequest, topic);
         } catch (ExecutionException | InterruptedException | JsonProcessingException e) {
             log.warn(e.getMessage());

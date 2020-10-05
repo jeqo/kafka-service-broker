@@ -59,7 +59,7 @@ public class ApiIntegrationTest {
     private final String restApiPassword;
 
     private final ConfigurableApplicationContext configurableApplicationContext;
-    private final ConfluentPlatformServiceInstanceService confluentPlatformServiceInstanceService;
+    private final TopicServiceInstanceService topicServiceInstanceService;
 
     public ApiIntegrationTest(
             @Autowired Catalog catalog,
@@ -67,7 +67,7 @@ public class ApiIntegrationTest {
             @Value("${broker.api.password}") String restApiPassword,
             @LocalServerPort int port,
             @Autowired ConfigurableApplicationContext configurableApplicationContext,
-            @Autowired ConfluentPlatformServiceInstanceService confluentPlatformServiceInstanceService) {
+            @Autowired TopicServiceInstanceService topicServiceInstanceService) {
         this.servicePlanUUID = catalog.getServiceDefinitions().get(0).getPlans().get(0).getId();
         this.serviceUUID = catalog.getServiceDefinitions().get(0).getId();
         this.port = port;
@@ -76,7 +76,7 @@ public class ApiIntegrationTest {
         this.restApiUser = restApiUser;
         this.restApiPassword = restApiPassword;
         this.configurableApplicationContext = configurableApplicationContext;
-        this.confluentPlatformServiceInstanceService = confluentPlatformServiceInstanceService;
+        this.topicServiceInstanceService = topicServiceInstanceService;
     }
 
     private String url() {
@@ -128,7 +128,7 @@ public class ApiIntegrationTest {
     @Test
     @DirtiesContext
     void deletingANonExistingTopicShouldNotThrowAnException() {
-        confluentPlatformServiceInstanceService.deleteTopic(UUID.randomUUID().toString());
+        topicServiceInstanceService.deleteTopic(UUID.randomUUID().toString());
         configurableApplicationContext.close();
     }
 

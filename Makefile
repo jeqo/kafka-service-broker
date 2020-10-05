@@ -31,12 +31,12 @@ k8s-service-broker:
 k8s-service-account-list:
 	kubectl exec \
 		-n catalog kafka-service-broker \
-		-- curl http://cloud-controller:13E663CA-1514-4278-A69D-84ACB4BF5B38@localhost:8080/accounts
+		-- curl -sSL http://cloud-controller:13E663CA-1514-4278-A69D-84ACB4BF5B38@localhost:8080/accounts
 
 k8s-service-account-create:
 	kubectl exec \
 		-n catalog kafka-service-broker \
-		-- curl -X POST -H "Content-Type: application/json" -d '{ "User:115996": {"apiKey":"UYCGV4WM3HCS2EMU", "apiSecret":"FhaiYStdafTE4sUeP4ojAqm3+qoBzoCHaQiEDPk17A29Ns+MJ0QslOCk788++HLl"}}' http://cloud-controller:13E663CA-1514-4278-A69D-84ACB4BF5B38@localhost:8080/accounts
+		-- curl -sSL -X POST -H "Content-Type: application/json" -d '{ "User:118652": {"apiKey":"UJC5JSCYMLUHWTFB", "apiSecret":"vtzbBy9NCs0zn0xTZ+UfCdmNUYTFCTi7pHIFZR9MoLdZSe7kP7Bk2Vn6uwGD5eK9"}}' http://cloud-controller:13E663CA-1514-4278-A69D-84ACB4BF5B38@localhost:8080/accounts
 
 PROJECT_NAME := system1
 
