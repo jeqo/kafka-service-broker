@@ -2,10 +2,10 @@ apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
   name: topic1
-  namespace: system-b
+  namespace: default
 spec:
   # References one of the previously returned services
-  clusterServiceClassExternalName: confluent-kafka
+  clusterServiceClassExternalName: kafka-topic
   clusterServicePlanExternalName: gold
   parameters:
     topicName: topic1
